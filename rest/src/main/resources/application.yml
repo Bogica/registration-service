@@ -1,0 +1,31 @@
+server:
+  port: 8081
+
+#==================Keycloak properties================#
+keycloak:
+  realm: registerapirealm
+  auth-server-url: http://localhost:8080/auth
+  ssl-required: external
+  #keycloak resource is the client ID
+  resource: registerApiClient
+  credentials:
+    secret: 12a658ea-b728-4f53-9948-492ef470363f
+  #The line below will prevent redirect to login page
+  bearer-only: true
+
+#Admin credentials, reading system env variables
+admin:
+  username: buzov.tea@gmail.com
+  password: teatea35
+
+#==================Google Api properties================
+gmail:
+  credentials:
+    secret: _S31-3QedZ_GhdpBsciWjMZl
+  clientid: 869675774281-68fa1n67en55nsov2hgbobmdm9sue00u.apps.googleusercontent.com
+  auth-server-url: https://accounts.google.com/o/oauth2/token
+  scope: openid profile email
+
+test:
+  name: myAppName
+

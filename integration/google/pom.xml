@@ -10,7 +10,7 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>communication-service</artifactId>
+    <artifactId>google</artifactId>
     <packaging>jar</packaging>
 
     <properties>
@@ -21,7 +21,7 @@
     <dependencies>
         <dependency>
             <groupId>com.wevolv</groupId>
-            <artifactId>user-service</artifactId>
+            <artifactId>keycloak</artifactId>
             <version>0.0.1-SNAPSHOT</version>
         </dependency>
     </dependencies>
