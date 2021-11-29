@@ -61,17 +61,12 @@ public class KeycloakServiceImpl implements KeycloakService {
     }
 
     @Override
-    public void createUserInKeycloak(RegistrationRequestDto registrationRequestDto) {
+    public String createUserInKeycloak(RegistrationRequestDto registrationRequestDto) {
+        String responseMessage = "";
+
         try {
             UsersResource usersResource = getKeycloakUserResource();
             UserRepresentation user = new UserRepresentation();
-
-            user.setEnabled(true);
-            user.setEmailVerified(false);
-            user.setUsername(registrationRequestDto.getEmail());
-            user.setFirstName(registrationRequestDto.getFirstName());
-            user.setLastName(registrationRequestDto.getLastName());
-            user.setEmail(registrationRequestDto.getEmail());
 
             // check if user already exists in keycloak database
             List<UserRepresentation> search = getRealmResource().users().search(user.getUsername());
@@ -84,29 +79,32 @@ public class KeycloakServiceImpl implements KeycloakService {
                 throw new IllegalArgumentException(String.format("User with username %s already exists!", user.getUsername()));
             } else {
 
+                user.setEnabled(true);
+                user.setEmailVerified(false);
+                user.setUsername(registrationRequestDto.getEmail());
+                user.setFirstName(registrationRequestDto.getFirstName());
+                user.setLastName(registrationRequestDto.getLastName());
+                user.setEmail(registrationRequestDto.getEmail());
+                // create password credential
+                CredentialRepresentation passwordCred = new CredentialRepresentation();
+                passwordCred.setTemporary(false);
+                passwordCred.setType(CredentialRepresentation.PASSWORD);
+                passwordCred.setValue(registrationRequestDto.getPassword());
+                Response response = usersResource.create(user);
+
                 User userApiResponse = userService.addUserMongo(registrationRequestDto);
-//                GenericApiResponse userApi = userApiResponse.getResponse();
-//                assert userApi != null;
-//                User userMapped = modelMapper.map(userApi.getResponse(), User.class);
 
                 String userId = userApiResponse.getId();
 
-                Response response = usersResource.create(user);
                 if ((response.getStatus() == 201)) {
                     String keycloakId = CreatedResponseUtil.getCreatedId(response);
                     log.info("Created user with keycloakId {} and username {}", keycloakId, user.getUsername());
 
-                    // create password credential
-                    CredentialRepresentation passwordCred = new CredentialRepresentation();
-                    passwordCred.setTemporary(false);
-                    passwordCred.setType(CredentialRepresentation.PASSWORD);
-                    passwordCred.setValue(registrationRequestDto.getPassword());
-
                     //TODO call Twilio Service and send email for verification
 
-                    String communicationApiResponse = communicationService.sendMailActivateAccount(registrationRequestDto.getEmail(), userId);
-                    System.out.println("");
-
+                    String communicationApiResponse =
+                            communicationService.sendMailActivateAccount(registrationRequestDto.getEmail(), userId);
+                    responseMessage = "User created";
                     //TODO Djole za Teu napisi koje endopinte da gadam
 
                 } else {
@@ -114,11 +112,11 @@ public class KeycloakServiceImpl implements KeycloakService {
                     throw new IllegalArgumentException("Username = " + user.getEmail() + " could not be created in Keycloak");
                 }
             }
-
+            return responseMessage;
         } catch (Exception e) {
             e.printStackTrace();
         }
-
+        return responseMessage;
     }
 
     private UsersResource getKeycloakUserResource() {

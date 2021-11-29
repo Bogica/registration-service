@@ -5,5 +5,5 @@ import com.wevolv.registrationservice.user.model.dto.RegistrationRequestDto;
 public interface KeycloakService {
 
     String getKeycloak();
-    void createUserInKeycloak(RegistrationRequestDto registrationRequestDto);
+    String createUserInKeycloak(RegistrationRequestDto registrationRequestDto);
 }
