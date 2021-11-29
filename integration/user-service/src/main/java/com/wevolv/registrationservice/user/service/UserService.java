@@ -10,6 +10,6 @@ import java.util.Optional;
 public interface UserService {
 
     Optional<User> findUserByEmail(String email);
-    ResponseEntity<GenericApiResponse> addUserMongo(RegistrationRequestDto registrationRequestDto);
+    User addUserMongo(RegistrationRequestDto registrationRequestDto);
     String getUser();
 }

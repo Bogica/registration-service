@@ -28,7 +28,7 @@ public class CommunicationServiceImpl implements CommunicationService {
     }
 
     @Override
-    public ResponseEntity<GenericApiResponse> sendMailActivateAccount(String email, String userId) {
+    public String sendMailActivateAccount(String email, String userId) {
         ObjectNode root = objectMapper.createObjectNode();
             root.put("email", email);
             root.put("userId", userId);
@@ -36,17 +36,19 @@ public class CommunicationServiceImpl implements CommunicationService {
             HttpHeaders httpHeaders = new HttpHeaders();
             httpHeaders.setContentType(MediaType.APPLICATION_JSON);
 
-            HttpEntity<Object> requestEntity = new HttpEntity<>(root, httpHeaders);
+            HttpEntity<Object> requestEntity = new HttpEntity<>(httpHeaders);
 
         try{
-            User userSaved = restTemplate.exchange(
-                    "http://localhost:8084/sendMailActivateAccount",
+            GenericApiResponse twilioResponse = restTemplate.exchange(
+                    "http://localhost:8090/sendMailActivateAccount/{email}/{userId}",
                     HttpMethod.POST,
                     requestEntity,
-                    User.class
+                    GenericApiResponse.class,
+                    email,
+                    userId
             ).getBody();
-            System.out.println(userSaved);
-            return((userSaved == null) ? genericApiResponseFailed(userSaved) : genericApiResponseSuccess(userSaved));
+            System.out.println(twilioResponse);
+            return((twilioResponse == null) ? null : twilioResponse.getResponse().toString());
         }catch (HttpStatusCodeException e){
             if(e.getStatusCode().is4xxClientError()) {
                 throw HttpClientErrorException.create(
@@ -66,26 +68,6 @@ public class CommunicationServiceImpl implements CommunicationService {
                 throw e;
             }
         }
-    }
-
-    private ResponseEntity<GenericApiResponse> genericApiResponseSuccess(User user) {
-
-        GenericApiResponse apiResponse = GenericApiResponse.builder()
-                .statusCode(HttpStatus.CREATED.value())
-                .response(user)
-                .message("Email is sent.")
-                .build();
-
-        return ResponseEntity.ok(apiResponse);
-    }
-
-    private ResponseEntity<GenericApiResponse> genericApiResponseFailed(User user) {
-        GenericApiResponse apiResponse = GenericApiResponse.builder()
-                .error("Not able to send email")
-                .statusCode(HttpStatus.BAD_REQUEST.value())
-                .build();
-
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(apiResponse);
     }
 
 }

@@ -7,5 +7,5 @@ public interface CommunicationService {
 
     public String test();
 
-    ResponseEntity<GenericApiResponse> sendMailActivateAccount(String email, String userId);
+    String sendMailActivateAccount(String email, String userId);
 }

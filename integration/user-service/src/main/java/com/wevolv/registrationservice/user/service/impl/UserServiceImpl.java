@@ -12,6 +12,7 @@ import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestTemplate;
 
+import java.util.LinkedHashMap;
 import java.util.Optional;
 
 @Slf4j
@@ -23,30 +24,30 @@ public class UserServiceImpl implements UserService {
     @Override
     public Optional<User> findUserByEmail(String email) {
 
-        try{
+        try {
             User user = restTemplate.exchange(
-                    "http://localhost:8082/user/{email}",
+                    "http://localhost:8086/user/{email}",
                     HttpMethod.GET,
                     HttpEntity.EMPTY,
                     User.class,
                     email
             ).getBody();
             System.out.println(user);
-            return((user == null) ? Optional.empty() : Optional.of(user));
-        } catch (HttpStatusCodeException e){
+            return ((user == null) ? Optional.empty() : Optional.of(user));
+        } catch (HttpStatusCodeException e) {
             log.error("Error getting user data for user with email: {}  with statusCode: {}", email, e.getStatusCode());
             String formattedErrorMessage = String.format("Error getting user data for user with email: %s. With exceptionMessage: %s", email, e.getMessage());
-            if(e.getStatusCode().equals(HttpStatus.NOT_FOUND)) {
+            if (e.getStatusCode().equals(HttpStatus.NOT_FOUND)) {
                 return Optional.empty();
             }
-            if(e.getStatusCode().is4xxClientError()) {
+            if (e.getStatusCode().is4xxClientError()) {
                 throw HttpClientErrorException.create(formattedErrorMessage,
                         e.getStatusCode(),
                         e.getStatusText(),
                         Optional.ofNullable(e.getResponseHeaders()).orElseGet(HttpHeaders::new),
                         e.getResponseBodyAsString().getBytes(),
                         null);
-            } else if(e.getStatusCode().is5xxServerError()){
+            } else if (e.getStatusCode().is5xxServerError()) {
                 throw HttpServerErrorException.create(formattedErrorMessage,
                         e.getStatusCode(),
                         e.getStatusText(),
@@ -60,28 +61,42 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public ResponseEntity<GenericApiResponse> addUserMongo(RegistrationRequestDto registrationRequestDto) {
+    public User addUserMongo(RegistrationRequestDto registrationRequestDto) {
         HttpHeaders httpHeaders = new HttpHeaders();
         httpHeaders.setContentType(MediaType.APPLICATION_JSON);
         HttpEntity<Object> requestEntity = new HttpEntity<>(registrationRequestDto, httpHeaders);
-        try{
-            ResponseEntity<GenericApiResponse> userSaved = restTemplate.exchange(
-                    "http://localhost:8082/user/",
+        try {
+            GenericApiResponse userSaved = restTemplate.exchange(
+                    "http://localhost:8086/user/",
                     HttpMethod.POST,
                     requestEntity,
-                    ResponseEntity.class
+                    GenericApiResponse.class
             ).getBody();
+
+            User user = new User();
+            if (userSaved != null) {
+                LinkedHashMap<String,String> map = (LinkedHashMap<String, String>) userSaved.getResponse();
+                user.setId(map.get("id"));
+                user.setEmail(map.get("email"));
+                user.setUsername(map.get("username"));
+                user.setEmailVerified(false);
+                user.setKeycloakId(map.get("keycloakId"));
+                user.setFirstName(map.get("firstName"));
+                user.setLastName(map.get("lastName"));
+            }
+
+
             System.out.println(userSaved);
-            return((userSaved == null) ? null : userSaved);
-        }catch (HttpStatusCodeException e){
-            if(e.getStatusCode().is4xxClientError()) {
+            return ((userSaved == null) ? null : user);
+        } catch (HttpStatusCodeException e) {
+            if (e.getStatusCode().is4xxClientError()) {
                 throw HttpClientErrorException.create(
                         e.getStatusCode(),
                         e.getStatusText(),
                         Optional.ofNullable(e.getResponseHeaders()).orElseGet(HttpHeaders::new),
                         e.getResponseBodyAsString().getBytes(),
                         null);
-            } else if(e.getStatusCode().is5xxServerError()){
+            } else if (e.getStatusCode().is5xxServerError()) {
                 throw HttpServerErrorException.create(
                         e.getStatusCode(),
                         e.getStatusText(),

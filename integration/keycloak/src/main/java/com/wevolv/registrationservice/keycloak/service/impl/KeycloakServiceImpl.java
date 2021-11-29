@@ -84,15 +84,15 @@ public class KeycloakServiceImpl implements KeycloakService {
                 throw new IllegalArgumentException(String.format("User with username %s already exists!", user.getUsername()));
             } else {
 
-                ResponseEntity<GenericApiResponse> userApiResponse = userService.addUserMongo(registrationRequestDto);
-                GenericApiResponse userApi = userApiResponse.getBody();
-                assert userApi != null;
-                User userMapped = modelMapper.map(userApi.getResponse(), User.class);
+                User userApiResponse = userService.addUserMongo(registrationRequestDto);
+//                GenericApiResponse userApi = userApiResponse.getResponse();
+//                assert userApi != null;
+//                User userMapped = modelMapper.map(userApi.getResponse(), User.class);
 
-                String userId = userMapped.getId();
+                String userId = userApiResponse.getId();
 
                 Response response = usersResource.create(user);
-                if ((response.getStatus() == 201) && (userApiResponse.getStatusCode().value() == 200)) {
+                if ((response.getStatus() == 201)) {
                     String keycloakId = CreatedResponseUtil.getCreatedId(response);
                     log.info("Created user with keycloakId {} and username {}", keycloakId, user.getUsername());
 
@@ -104,8 +104,10 @@ public class KeycloakServiceImpl implements KeycloakService {
 
                     //TODO call Twilio Service and send email for verification
 
-                    ResponseEntity<GenericApiResponse> communicationApiResponse = communicationService.sendMailActivateAccount(registrationRequestDto.getEmail(), userId);
+                    String communicationApiResponse = communicationService.sendMailActivateAccount(registrationRequestDto.getEmail(), userId);
                     System.out.println("");
+
+                    //TODO Djole za Teu napisi koje endopinte da gadam
 
                 } else {
                     log.info("Username = " + user.getEmail() + " could not be created in keycloak");
